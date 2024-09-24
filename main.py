@@ -1,15 +1,17 @@
-from board_render import PacmanGameController
-from base_setting import GameRenderer
-from objects import Wall
+from maze.maze_generation import MazeController
+from logic.game_controller import GameController
+from logic.blocks import Wall
+
+MAZE_SIZE = (20, 14)
+BLOCK_SIZE = 20
 
 if __name__ == "__main__":
-    pacman_game = PacmanGameController()
-    size = pacman_game.size
-    game_renderer = GameRenderer(size[0] * pacman_game.block_size, size[1] * pacman_game.block_size)
-
-    for y, row in enumerate(pacman_game.numpy_maze):
-        for x, column in enumerate(row):
-            if column == 0:
-                game_renderer.add_wall(Wall(game_renderer, x, y, pacman_game.block_size))
-
-    game_renderer.tick()
+    level_maze = MazeController(MAZE_SIZE, BLOCK_SIZE)
+    level_maze.level_generation()
+    print(level_maze)
+    game_renderer = GameController((MAZE_SIZE[0]-1) * level_maze.maze_block_size,
+                                   (MAZE_SIZE[1] * 2 -1) * level_maze.maze_block_size,
+                                   BLOCK_SIZE)
+    game_renderer.objects_handling(level_maze)
+    game_renderer.text_handling()
+    game_renderer.frame()
