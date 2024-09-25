@@ -1,4 +1,4 @@
-from logic.utils import Direction, GHOST_COLORS
+from logic.utils import Direction
 import pygame
 import random
 
@@ -7,7 +7,7 @@ class MovableObject:
     def __init__(self, game_controller, x, y, size: int, speed, color=(255, 0, 0)):
         self.current_direction = Direction.NONE
         self.previous_direction = Direction.NONE
-
+        self.starting_position = x, y
         self.size = size
         self.controller = game_controller
         self.surface = game_controller.game_screen
@@ -70,16 +70,9 @@ class MovableObject:
         self.current_direction = in_direction
 
 
-class Ghost(MovableObject):
-    def __init__(self, scene, x, y, size: int, color, speed):
-        super().__init__(scene, x * size, y * size, size, color, speed)
-        self.score = 200
-
-
 class Hero(MovableObject):
-    def __init__(self, scene, x, y, size: int, speed, offset=5):
+    def __init__(self, scene, x, y, size: int, speed):
         super().__init__(scene, x * size, y * size, size, speed)
-        self.offset = offset
         self.image = pygame.image.load('assets/pacman.png')
 
     def set_direction(self, direction):
@@ -94,6 +87,7 @@ class Hero(MovableObject):
         self.previous_direction = self.current_direction
 
         self.cookie_pickup()
+        self.ghost_handling()
 
     def automatic_move(self, direction: Direction):
         collision_status, position = self.check_collision_in_direction(direction)
@@ -117,3 +111,17 @@ class Hero(MovableObject):
 
         if len(cookies) == 0:
             self.controller.regenerate_flag = True
+
+    def ghost_handling(self):
+        collision_rect = pygame.Rect(self.x, self.y, self.size, self.size)
+        ghosts = self.controller.ghosts
+        for ghost in ghosts:
+            collides = collision_rect.colliderect(ghost.get_shape())
+            if collides:
+                ghost.reset_self()
+                self.set_position(self.starting_position[0], self.starting_position[1])
+                self.controller.hero_lives -= 1
+
+        if self.controller.hero_lives == 0:
+            #self.set_position(self.starting_position[0], self.starting_position[1])
+            self.controller.lost_flag = True

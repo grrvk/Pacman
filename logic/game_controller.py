@@ -1,22 +1,24 @@
 import pygame
 import random
 import numpy as np
-from logic.utils import Direction, GHOST_COLORS
-from logic.sprites import Ghost, Hero
-from logic.blocks import Wall, SmallCookie
-from logic.text_controller import TextBlock, ScoreController, HighScoreController, ChangingTextBlock
+from logic.utils import Direction
+from logic.sprites import Hero
+from logic.ghosts import Inky, Pinky, Blinky, Clyde
+from logic.blocks import Wall, SmallCookie, Heart, Door
+from logic.text_controller import TextBlock, ChangingTextBlock
 from maze.maze_generation import MazeController
 
 
 class GameController:
     def __init__(self, maze_size, block_size):
         pygame.init()
-        self.width = (maze_size[0]-1) * block_size
+        self.maze_size = maze_size
+        self.width = (maze_size[0] - 1) * block_size
         self.height = (maze_size[1] * 2 - 1) * block_size
         self.block_height = block_size
         self.num_vstack_text = 2
         self.game_screen = pygame.display.set_mode((self.width,
-                                                    self.height + self.block_height * self.num_vstack_text))
+                                                    self.height + self.block_height * (self.num_vstack_text + 1)))
         self.font = pygame.font.SysFont('Arial', self.block_height - 2)
         pygame.display.set_caption('Pacman')
         self.clock = pygame.time.Clock()
@@ -25,10 +27,13 @@ class GameController:
         self.maze_base = MazeController(maze_size, self.block_height)
         self.current_maze = None
         self.regenerate_flag = True
+        self.lost_flag = False
         self.ghost_colors = None
 
+        self.hero_lives = 3
         self.hero_speed = 1
-        self.loops_number = 22
+        self.ghost_speed = self.hero_speed - 0.2
+        self.loops_number = 5
 
         self.score = 0
         self.high_score = 0
@@ -38,15 +43,18 @@ class GameController:
         self.cookies = []
         self.ghosts = []
         self.hero = None
+        self.door = None
         self.run = True
 
     def frame(self, fps=60):
         while self.run:
+            if self.lost_flag: self.game_regeneration()
             if self.regenerate_flag: self.level_generation()
             for game_object in self.game_objects:
                 game_object.tick()
                 game_object.draw()
 
+            self.lives_handling()
             self.draw_decorative_text()
             self.changing_text_handling()
             pygame.display.flip()
@@ -55,6 +63,17 @@ class GameController:
             self.handle_event()
         print("Finished")
         pygame.quit()
+
+    def game_regeneration(self):
+        self.clean()
+        self.lost_flag = False
+        self.hero_lives = 3
+        self.hero_speed = 1
+        self.ghost_speed = self.hero_speed - 0.2
+        self.loops_number = 5
+        self.level = 0
+        self.high_score = 0
+        self.level_generation()
 
     def level_generation(self):
         self.clean()
@@ -66,8 +85,7 @@ class GameController:
 
     def regenerate_level_complexity(self):
         self.loops_number -= 2
-        #if self.hero_speed < 1.1: self.hero_speed += 0.05
-        pass
+        self.ghost_speed += 0.05
 
     def clean(self):
         self.game_objects = []
@@ -76,9 +94,6 @@ class GameController:
         self.ghosts = []
         self.hero = None
         self.score = 0
-
-    # def set_ghost_colors(self):
-    #     self.ghost_colors = [(255, 76, 76), (0, 31, 63), (106, 154, 176), (129, 104, 157)]
 
     def objects_handling(self, maze):
         wall_positions = np.argwhere(np.array(maze.numpy_maze) == 0)
@@ -90,15 +105,28 @@ class GameController:
                                             maze.maze_block_size))
 
         self.cookies = self.cookies[120:121]
-        ghost_colors = GHOST_COLORS.copy()
-        for gp in maze.ghost_spawns:
-            color = random.choice(ghost_colors)
-            ghost_colors.remove(color)
-            self.ghosts.append(Ghost(self, gp[1], gp[0] + self.num_vstack_text, maze.maze_block_size,
-                                     self.hero_speed - 0.05, color))
+
+        self.ghosts.append(Inky(self, self.maze_base.ghost_spawns[0][1], self.maze_base.ghost_spawns[0][0] + self.num_vstack_text,
+                                maze.maze_block_size, self.ghost_speed, (0, 31, 63)))
+        self.ghosts.append(
+            Blinky(self, self.maze_base.ghost_spawns[1][1], self.maze_base.ghost_spawns[1][0] + self.num_vstack_text,
+                 maze.maze_block_size, self.ghost_speed, (106, 154, 176)))
+        self.ghosts.append(
+            Pinky(self, self.maze_base.ghost_spawns[2][1], self.maze_base.ghost_spawns[2][0] + self.num_vstack_text,
+                 maze.maze_block_size, self.ghost_speed, (255, 76, 76)))
+        self.ghosts.append(
+            Clyde(self, self.maze_base.ghost_spawns[3][1], self.maze_base.ghost_spawns[3][0] + self.num_vstack_text,
+                 maze.maze_block_size, self.ghost_speed, (129, 104, 157)))
+        # for gp in maze.ghost_spawns:
+        #     color = random.choice(ghost_colors)
+        #     ghost_colors.remove(color)
+        #     self.ghosts.append(Ghost(self, gp[1], gp[0] + self.num_vstack_text, maze.maze_block_size,
+        #                              self.hero_speed - 0.05, color))
+
         self.hero = Hero(self, maze.hero_spawn[1], maze.hero_spawn[0] + self.num_vstack_text, maze.maze_block_size,
                          self.hero_speed)
-
+        self.walls.append(Wall(self.game_screen, maze.door_position[1], maze.door_position[0] + self.num_vstack_text,
+                                   maze.maze_block_size, (188, 159, 139)))
         all_objects = np.concatenate((self.walls, self.ghosts, [self.hero],
                                       self.cookies), axis=-1)
         for block in all_objects:
@@ -111,6 +139,12 @@ class GameController:
         for i, block in enumerate(self.changing_text):
             block.tick(changing_values[i])
             block.draw()
+
+    def lives_handling(self):
+        for i in range(self.hero_lives):
+            heart = Heart(self.game_screen, i, self.maze_size[1] * 2 - 1 + self.num_vstack_text,
+                          self.block_height)
+            heart.draw()
 
     def initialize_text_blocks(self):
         score_header = TextBlock(self.game_screen, self.width * 0.325, 0,

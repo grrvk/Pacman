@@ -10,8 +10,10 @@ class MazeController:
         self.numpy_maze = []
 
         self.cookie_spaces = []
+        self.reachable_spaces = []
         self.ghost_spawns = []
         self.hero_spawn = None
+        self.door_position = None
 
     def level_generation(self, loops):
         print('Generating new map')
@@ -23,7 +25,9 @@ class MazeController:
         self.numpy_maze = []
         self.cookie_spaces = []
         self.ghost_spawns = []
+        self.reachable_spaces = []
         self.hero_spawn = None
+        self.door_position = None
 
 
     def convert_maze(self):
@@ -37,12 +41,14 @@ class MazeController:
                     self.ghost_spawns.append((i, j))
                 if maze_without_outer_bound[i][j].type == "H":
                     self.hero_spawn = (i, j)
+                if maze_without_outer_bound[i][j].type == "D":
+                    self.door_position = (i, j)
                 if maze_without_outer_bound[i][j].type == "X":
                     converted_row.append(0)
                 else:
                     converted_row.append(1)
-                    #print(maze_without_outer_bound[i][j].type)
-                    if maze_without_outer_bound[i][j].type not in ["G", "H", "W"]: self.cookie_spaces.append((i, j))
+                    if maze_without_outer_bound[i][j].type not in ["G", "H", "W", "D"]: self.cookie_spaces.append((i, j))
+                    if maze_without_outer_bound[i][j].type not in ["G", "W", "D"]: self.reachable_spaces.append((i, j))
             self.numpy_maze.append(converted_row)
         # self.cookie_spaces = np.setdiff1d(self.cookie_spaces, self.ghost_spawns)
         # self.reachable_spaces = np.setdiff1d(self.reachable_spaces, self.ghost_spawns)

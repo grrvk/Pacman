@@ -29,9 +29,23 @@ class Wall(GameObject):
         pygame.draw.rect(self.surface, self.color, rectangle, border_radius=4)
 
 
-class Door(Wall):
-    def __init__(self, game_screen, x, y, size: int, color=(247, 181, 202)):
+class Heart(GameObject):
+    def __init__(self, game_screen, x, y, size: int, color=(181, 193, 142)):
         super().__init__(game_screen, x * size, y * size, size, color)
+        self.image = pygame.image.load('assets/heart.png')
+
+    def draw(self):
+        self.image = pygame.transform.scale(self.image, (self.size, self.size))
+        self.surface.blit(self.image, self.get_shape())
+
+
+class Door(Wall):
+    def __init__(self, game_screen, x, y, size: int, color=(0,0,0)):
+        super().__init__(game_screen, x * size, y * size, size, color)
+
+    def draw(self):
+        rectangle = pygame.Rect(self.x, self.y, self.size, self.size)
+        pygame.draw.rect(self.surface, self.color, rectangle, border_radius=4)
 
 
 class SmallCookie(GameObject):

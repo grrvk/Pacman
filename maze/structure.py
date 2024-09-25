@@ -85,10 +85,10 @@ class Maze:
 
     def postprocess(self):
         center = (self.size[0] // 2, self.size[1] // 2)
-        self.maze[center[0] - 1, center[1]].type = NodeType.WALL.value  # change to DOOR
+        self.maze[center[0] - 1, center[1]].type = NodeType.DOOR.value  # change to DOOR
         if self.maze[center[0] - 2, center[1]].type == NodeType.WALL.value:
             self.maze[center[0] - 2, center[1]].type = NodeType.PATH.value
-        ghost_spawns = random.sample(list(self.maze[center[0], center[1] - 2:center[1] + 3]), 4)
+        ghost_spawns = random.sample(list(self.maze[center[0], center[1] - 2:center[1] + 3]), 4) #!!!!1 4
         for node in ghost_spawns:
             node.type = NodeType.GHOST_SPAWN.value
         for node in list(self.maze[center[0], center[1] - 2:center[1] + 3]):
