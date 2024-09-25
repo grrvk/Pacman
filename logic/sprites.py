@@ -1,17 +1,6 @@
-from enum import Enum
+from logic.utils import Direction, GHOST_COLORS
 import pygame
 import random
-
-
-class Direction(Enum):
-    DOWN = -90
-    RIGHT = 0
-    UP = 90
-    LEFT = 180
-    NONE = 360
-
-
-GHOST_COLORS = [(255, 76, 76), (0, 31, 63), (106, 154, 176), (129, 104, 157)]
 
 
 class MovableObject:
@@ -38,11 +27,16 @@ class MovableObject:
 
     def calculate_position(self, in_direction: Direction):
         desired_position = (self.x, self.y)
-        if in_direction == Direction.NONE: return desired_position
-        elif in_direction == Direction.UP: return (self.x, self.y - 1)
-        elif in_direction == Direction.DOWN: return (self.x, self.y + 1)
-        elif in_direction == Direction.LEFT: return (self.x - 1, self.y)
-        elif in_direction == Direction.RIGHT: return(self.x + 1, self.y)
+        if in_direction == Direction.NONE:
+            return desired_position
+        elif in_direction == Direction.UP:
+            return (self.x, self.y - 1)
+        elif in_direction == Direction.DOWN:
+            return (self.x, self.y + 1)
+        elif in_direction == Direction.LEFT:
+            return (self.x - 1, self.y)
+        elif in_direction == Direction.RIGHT:
+            return (self.x + 1, self.y)
 
     def check_collision_in_direction(self, in_direction: Direction):
         desired_position = self.calculate_position(in_direction)
@@ -76,16 +70,14 @@ class MovableObject:
 
 
 class Ghost(MovableObject):
-    def __init__(self, scene, x, y, size: int):
-        color = random.choice(GHOST_COLORS)
-        GHOST_COLORS.remove(color)
-        super().__init__(scene, x*size, y*size, size, color)
+    def __init__(self, scene, x, y, size: int, color):
+        super().__init__(scene, x * size, y * size, size, color)
         self.score = 200
 
 
 class Hero(MovableObject):
     def __init__(self, scene, x, y, size: int, color=(255, 222, 77), offset=5):
-        super().__init__(scene, x*size, y*size, size, color)
+        super().__init__(scene, x * size, y * size, size, color)
         self.offset = offset
         self.image = pygame.image.load('assets/pacman.png')
 
@@ -123,9 +115,4 @@ class Hero(MovableObject):
                 cookies.remove(cookie)
 
         if len(cookies) == 0:
-            pass  # WON
-
-
-
-
-
+            self.controller.regenerate_flag = True

@@ -10,17 +10,25 @@ class MazeController:
         self.numpy_maze = []
 
         self.cookie_spaces = []
-        self.reachable_spaces = []
         self.ghost_spawns = []
         self.hero_spawn = None
 
     def level_generation(self):
         print('Generating new map')
+        self.clean()
         self.maze.generate_maze()
         self.convert_maze()
 
+    def clean(self):
+        self.numpy_maze = []
+        self.cookie_spaces = []
+        self.ghost_spawns = []
+        self.hero_spawn = None
+
+
     def convert_maze(self):
         maze_without_outer_bound = self.maze.maze[1:-1, 1:-1]
+        #print(maze_without_outer_bound)
         h, w = maze_without_outer_bound.shape
         for i in range(h):
             converted_row = []
@@ -33,8 +41,8 @@ class MazeController:
                     converted_row.append(0)
                 else:
                     converted_row.append(1)
-                    if maze_without_outer_bound[i][j].type not in ["G", "H"]: self.cookie_spaces.append((i, j))
-                    if maze_without_outer_bound[i][j].type != "G": self.reachable_spaces.append((i, j))
+                    #print(maze_without_outer_bound[i][j].type)
+                    if maze_without_outer_bound[i][j].type not in ["G", "H", "W"]: self.cookie_spaces.append((i, j))
             self.numpy_maze.append(converted_row)
         # self.cookie_spaces = np.setdiff1d(self.cookie_spaces, self.ghost_spawns)
         # self.reachable_spaces = np.setdiff1d(self.reachable_spaces, self.ghost_spawns)

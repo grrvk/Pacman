@@ -15,6 +15,7 @@ class NodeType(Enum):
     WALL = 'X'
     OUTER_SCOPE = 'O'
     GHOST_SPAWN = 'G'
+    GHOST_WHITE_SPACE = 'W'
     HERO_SPAWN = 'H'
     DOOR = 'D'
 
@@ -51,6 +52,7 @@ class Maze:
         # print('----------------------------------')
         self.postprocess()
         # print(self.maze)
+        # print('----------------------------------')
 
     def preprocess(self):
         for i in range(self.size[0]):
@@ -86,8 +88,8 @@ class Maze:
         ghost_spawns = random.sample(list(self.maze[center[0], center[1] - 2:center[1] + 3]), 4)
         for node in ghost_spawns:
             node.type = NodeType.GHOST_SPAWN.value
-        for node in self.maze[center[0], center[1] - 2:center[1] + 3]:
-            if node not in ghost_spawns: node.type = NodeType.PATH.value
+        for node in list(self.maze[center[0], center[1] - 2:center[1] + 3]):
+            if node not in ghost_spawns: node.type = NodeType.GHOST_WHITE_SPACE.value
         self.maze[center[0] + 2, center[1]].type = NodeType.HERO_SPAWN.value
 
     def find_free_nodes(self, sx, sy):
