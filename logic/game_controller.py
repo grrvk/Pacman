@@ -27,6 +27,9 @@ class GameController:
         self.regenerate_flag = True
         self.ghost_colors = None
 
+        self.hero_speed = 1
+        self.loops_number = 22
+
         self.score = 0
         self.high_score = 0
         self.level = 0
@@ -53,14 +56,17 @@ class GameController:
         print("Finished")
         pygame.quit()
 
-    def level_generation(self, compl=0):
+    def level_generation(self):
         self.clean()
         self.level += 1
-        self.maze_base.level_generation()
+        self.regenerate_level_complexity()
+        self.maze_base.level_generation(self.loops_number)
         self.objects_handling(self.maze_base)
         self.regenerate_flag = False
 
-    def generate_level_complexity(self):
+    def regenerate_level_complexity(self):
+        self.loops_number -= 2
+        #if self.hero_speed < 1.1: self.hero_speed += 0.05
         pass
 
     def clean(self):
@@ -83,14 +89,15 @@ class GameController:
             self.cookies.append(SmallCookie(self.game_screen, position[1], position[0] + self.num_vstack_text,
                                             maze.maze_block_size))
 
-        #print(len(maze.ghost_spawns))
+        self.cookies = self.cookies[120:121]
         ghost_colors = GHOST_COLORS.copy()
         for gp in maze.ghost_spawns:
-            #print(self.ghost_colors)
             color = random.choice(ghost_colors)
             ghost_colors.remove(color)
-            self.ghosts.append(Ghost(self, gp[1], gp[0] + self.num_vstack_text, maze.maze_block_size, color))
-        self.hero = Hero(self, maze.hero_spawn[1], maze.hero_spawn[0] + self.num_vstack_text, maze.maze_block_size)
+            self.ghosts.append(Ghost(self, gp[1], gp[0] + self.num_vstack_text, maze.maze_block_size,
+                                     self.hero_speed - 0.05, color))
+        self.hero = Hero(self, maze.hero_spawn[1], maze.hero_spawn[0] + self.num_vstack_text, maze.maze_block_size,
+                         self.hero_speed)
 
         all_objects = np.concatenate((self.walls, self.ghosts, [self.hero],
                                       self.cookies), axis=-1)

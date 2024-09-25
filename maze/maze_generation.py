@@ -13,10 +13,10 @@ class MazeController:
         self.ghost_spawns = []
         self.hero_spawn = None
 
-    def level_generation(self):
+    def level_generation(self, loops):
         print('Generating new map')
         self.clean()
-        self.maze.generate_maze()
+        self.maze.generate_maze(loops)
         self.convert_maze()
 
     def clean(self):

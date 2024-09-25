@@ -38,7 +38,7 @@ class Maze:
         self.size: tuple = (h, w)  # width, height
         self.maze = np.full((h, w), None)
 
-    def generate_maze(self):
+    def generate_maze(self, loops):
         self.preprocess()
         sx, sy = random.choice(range(2, self.size[0] - 2, 2)), random.choice(range(2, self.size[1] - 2, 2))
         deadlocks = []
@@ -51,8 +51,11 @@ class Maze:
         # print(self.maze)
         # print('----------------------------------')
         self.postprocess()
-        # print(self.maze)
-        # print('----------------------------------')
+        print(self.maze)
+        print('----------------------------------')
+        self.ease_structure(loops)
+        print(self.maze)
+        print('----------------------------------')
 
     def preprocess(self):
         for i in range(self.size[0]):
@@ -82,8 +85,8 @@ class Maze:
 
     def postprocess(self):
         center = (self.size[0] // 2, self.size[1] // 2)
-        self.maze[center[0]-1, center[1]].type = NodeType.WALL.value  # change to DOOR
-        if self.maze[center[0]-2, center[1]].type == NodeType.WALL.value:
+        self.maze[center[0] - 1, center[1]].type = NodeType.WALL.value  # change to DOOR
+        if self.maze[center[0] - 2, center[1]].type == NodeType.WALL.value:
             self.maze[center[0] - 2, center[1]].type = NodeType.PATH.value
         ghost_spawns = random.sample(list(self.maze[center[0], center[1] - 2:center[1] + 3]), 4)
         for node in ghost_spawns:
@@ -95,7 +98,7 @@ class Maze:
     def find_free_nodes(self, sx, sy):
         free_nodes = []
         for direction in Direction:
-            reached_node = self.maze[sx+direction.value[0]][sy+direction.value[1]]
+            reached_node = self.maze[sx + direction.value[0]][sy + direction.value[1]]
             if not reached_node.visited:
                 free_nodes.append((direction.value, reached_node))
         return free_nodes
@@ -111,13 +114,14 @@ class Maze:
                 stack.remove(current_node)
             else:
                 direction, node = random.choice(free_nodes)
-                wx, wy = current_node.x+direction[0]//2, current_node.y+direction[1]//2
+                wx, wy = current_node.x + direction[0] // 2, current_node.y + direction[1] // 2
                 self.maze[wx][wy].type = NodeType.PATH.value
-                stack.append(self.maze[current_node.x+direction[0]][current_node.y+direction[1]])
+                stack.append(self.maze[current_node.x + direction[0]][current_node.y + direction[1]])
             self.DFS(stack, deadlocks)
 
     def check_surrounding(self, x, y):
-        node_types = [self.maze[x + direction.value[0]//2][y + direction.value[1]//2].type for direction in Direction]
+        node_types = [self.maze[x + direction.value[0] // 2][y + direction.value[1] // 2].type for direction in
+                      Direction]
         if node_types.count(NodeType.WALL.value) <= 2:
             return False
         return True
@@ -126,7 +130,7 @@ class Maze:
         walls_around = []
         for direction in Direction:
             node = self.maze[x + direction.value[0]][y + direction.value[1]]
-            wall = self.maze[x + direction.value[0]//2][y + direction.value[1]//2]
+            wall = self.maze[x + direction.value[0] // 2][y + direction.value[1] // 2]
             if node.type == NodeType.PATH.value and wall.type == NodeType.WALL.value:
                 walls_around.append(wall)
         return walls_around
@@ -138,18 +142,21 @@ class Maze:
                 wall = random.choice(walls_around)
                 wall.type = NodeType.PATH.value
 
+    def check_surrounding_ghosts(self, x, y):
+        for row in self.maze[x - 1: x + 2, y - 1:y + 2]:
+            for node in row:
+                if node.type == NodeType.GHOST_SPAWN.value: return False
+        return True
+
     def ease_structure(self, number_of_loops):
         for _ in range(number_of_loops):
             while True:
                 x, y = random.choice(range(2, self.size[0] - 2, 1)), random.choice(range(2, self.size[1] - 1, 2))
-                if self.maze[x][y].type == NodeType.WALL.value and not self.check_surrounding(x, y):
+                if (self.maze[x][y].type == NodeType.WALL.value and
+                        self.check_surrounding_ghosts(x, y) and
+                        not self.check_surrounding(x, y)):
                     self.maze[x][y].type = NodeType.PATH.value
-                break
+                    break
 
     def __str__(self):
         return str(self.maze)
-
-
-level_maze = Maze(20, 10)
-level_maze.generate_maze()
-print(level_maze.maze)

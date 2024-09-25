@@ -4,7 +4,7 @@ import random
 
 
 class MovableObject:
-    def __init__(self, game_controller, x, y, size: int, color=(255, 0, 0)):
+    def __init__(self, game_controller, x, y, size: int, speed, color=(255, 0, 0)):
         self.current_direction = Direction.NONE
         self.previous_direction = Direction.NONE
 
@@ -15,6 +15,7 @@ class MovableObject:
         self.y = y
         self.x = x
         self.image = None
+        self.speed = speed
 
     def collides_with_wall(self, in_position):
         collision_rect = pygame.Rect(in_position[0], in_position[1], self.size, self.size)
@@ -30,13 +31,13 @@ class MovableObject:
         if in_direction == Direction.NONE:
             return desired_position
         elif in_direction == Direction.UP:
-            return (self.x, self.y - 1)
+            return (self.x, self.y - self.speed)
         elif in_direction == Direction.DOWN:
-            return (self.x, self.y + 1)
+            return (self.x, self.y + self.speed)
         elif in_direction == Direction.LEFT:
-            return (self.x - 1, self.y)
+            return (self.x - self.speed, self.y)
         elif in_direction == Direction.RIGHT:
-            return (self.x + 1, self.y)
+            return (self.x + self.speed, self.y)
 
     def check_collision_in_direction(self, in_direction: Direction):
         desired_position = self.calculate_position(in_direction)
@@ -70,14 +71,14 @@ class MovableObject:
 
 
 class Ghost(MovableObject):
-    def __init__(self, scene, x, y, size: int, color):
-        super().__init__(scene, x * size, y * size, size, color)
+    def __init__(self, scene, x, y, size: int, color, speed):
+        super().__init__(scene, x * size, y * size, size, color, speed)
         self.score = 200
 
 
 class Hero(MovableObject):
-    def __init__(self, scene, x, y, size: int, color=(255, 222, 77), offset=5):
-        super().__init__(scene, x * size, y * size, size, color)
+    def __init__(self, scene, x, y, size: int, speed, offset=5):
+        super().__init__(scene, x * size, y * size, size, speed)
         self.offset = offset
         self.image = pygame.image.load('assets/pacman.png')
 
@@ -101,7 +102,7 @@ class Hero(MovableObject):
             self.set_position(position[0], position[1])
 
     def draw(self):
-        self.image = pygame.transform.scale(self.image, (self.size, self.size))
+        self.image = pygame.transform.scale(self.image, (self.size - 0.02, self.size - 0.02))
         self.surface.blit(self.image, self.get_shape())
 
     def cookie_pickup(self):
