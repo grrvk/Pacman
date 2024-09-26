@@ -4,7 +4,7 @@ import numpy as np
 from logic.utils import Direction
 from logic.sprites import Hero
 from logic.ghosts import Inky, Pinky, Blinky, Clyde
-from logic.blocks import Wall, SmallCookie, Heart, Powerup
+from logic.blocks import Wall, SmallCookie, Heart, Powerup, Cherry
 from logic.text_controller import TextBlock, ChangingTextBlock
 from maze.maze_generation import MazeController
 
@@ -32,8 +32,11 @@ class GameController:
 
         self.hero_lives = 3
         self.hero_speed = 1
+        self.cherries = 0
+        self.cherry = None
+        self.got_hp = False
         self.ghost_speed = self.hero_speed - 0.2
-        self.loops_number = 5
+        self.loops_number = 22
 
         self.score = 0
         self.high_score = 0
@@ -58,6 +61,7 @@ class GameController:
             self.lives_handling()
             self.draw_decorative_text()
             self.changing_text_handling()
+            self.picked_cherries_handling()
             pygame.display.flip()
             self.clock.tick(fps)
             self.game_screen.fill((0,0,0))
@@ -68,10 +72,12 @@ class GameController:
     def game_regeneration(self):
         self.clean()
         self.lost_flag = False
+        self.got_hp = False
         self.hero_lives = 3
         self.hero_speed = 1
         self.ghost_speed = self.hero_speed - 0.2
-        self.loops_number = 5
+        self.loops_number = 22
+        self.cherries = 0
         self.level = 0
         self.high_score = 0
         self.level_generation()
@@ -93,7 +99,9 @@ class GameController:
         self.walls = []
         self.cookies = []
         self.ghosts = []
+        self.powerups = []
         self.hero = None
+        self.cherry = None
         self.score = 0
 
     def objects_handling(self, maze):
@@ -101,9 +109,16 @@ class GameController:
         for position in wall_positions:
             self.walls.append(Wall(self.game_screen, position[1], position[0] + self.num_vstack_text,
                                    maze.maze_block_size))
+
+        cherry_pos = None
+        if random.random() < 120 and self.cherries != 3 and not self.got_hp:
+            cherry_pos = random.choice(maze.cookie_spaces)
+            maze.cookie_spaces.remove(cherry_pos)
+
         for position in maze.cookie_spaces:
             self.cookies.append(SmallCookie(self.game_screen, position[1], position[0] + self.num_vstack_text,
                                             maze.maze_block_size))
+
         for position in maze.powerups:
             self.powerups.append(Powerup(self.game_screen, position[1], position[0] + self.num_vstack_text,
                                             maze.maze_block_size))
@@ -129,6 +144,10 @@ class GameController:
 
         self.hero = Hero(self, maze.hero_spawn[1], maze.hero_spawn[0] + self.num_vstack_text, maze.maze_block_size,
                          self.hero_speed)
+        if cherry_pos:
+            self.cherry = Cherry(self.game_screen, cherry_pos[1], cherry_pos[0] + self.num_vstack_text,
+                                self.block_height)
+            self.game_objects.append(self.cherry)
         self.walls.append(Wall(self.game_screen, maze.door_position[1], maze.door_position[0] + self.num_vstack_text,
                                    maze.maze_block_size, (64, 46, 122)))
         all_objects = np.concatenate((self.walls, self.ghosts, [self.hero],
@@ -149,6 +168,16 @@ class GameController:
             heart = Heart(self.game_screen, i, self.maze_size[1] * 2 - 1 + self.num_vstack_text,
                           self.block_height)
             heart.draw()
+
+    def picked_cherries_handling(self):
+        for i in range(self.cherries):
+            cherry = Cherry(self.game_screen, self.maze_size[0] - i - 2, self.maze_size[1] * 2 - 1 + self.num_vstack_text,
+                            self.block_height)
+            cherry.draw()
+        if self.cherries == 3:
+            self.hero_lives += 1
+            self.cherries = 0
+            self.got_hp = True
 
     def initialize_text_blocks(self):
         score_header = TextBlock(self.game_screen, self.width * 0.325, 0,

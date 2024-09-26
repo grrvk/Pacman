@@ -8,7 +8,7 @@ class TextBlock:
         self.font = font
         self.x = x
         self.y = y
-        self.text_render = self.font.render(base_text, True, (0, 0, 0))
+        self.text_render = self.font.render(base_text, True, (255, 255, 255))
 
     def tick(self, text):
         pass
@@ -24,7 +24,7 @@ class ChangingTextBlock(TextBlock):
         super().__init__(surface, x, y, size, font)
 
     def tick(self, text):
-        self.text_render = self.font.render(str(text), True, (0, 0, 0))
+        self.text_render = self.font.render(str(text), True, (255, 255, 255))
 
 
 class ScoreController(TextBlock):
@@ -34,7 +34,7 @@ class ScoreController(TextBlock):
 
     def tick(self, score):
         self.score = score
-        self.text_render = self.font.render(f"{self.score}", True, (0, 0, 0))
+        self.text_render = self.font.render(f"{self.score}", True, (255, 255, 255))
 
 
 class HighScoreController(TextBlock):

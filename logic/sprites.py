@@ -94,6 +94,7 @@ class Hero(MovableObject):
         self.powerup_pickup()
         if self.powered: self.power_check()
         self.cookie_pickup()
+        self.cherry_pickup()
         self.ghost_handling()
         self.counter_des += 1
         if self.counter_des == 21: self.counter_des = 0
@@ -133,6 +134,16 @@ class Hero(MovableObject):
 
         if len(cookies) == 0:
             self.controller.regenerate_flag = True
+
+    def cherry_pickup(self):
+        collision_rect = pygame.Rect(self.x, self.y, self.size, self.size)
+        if self.controller.cherry:
+            collides = collision_rect.colliderect(self.controller.cherry.get_shape())
+            if collides:
+                self.controller.cherries += 1
+                self.controller.game_objects.remove(self.controller.cherry)
+                self.controller.score += self.controller.cherry.score
+                self.controller.cherry = None
 
     def powerup_pickup(self):
         collision_rect = pygame.Rect(self.x, self.y, self.size, self.size)

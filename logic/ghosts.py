@@ -92,8 +92,12 @@ class Ghost(MovableObject):
             targets = []
             directions = [(0, 1), (1, 0), (0, -1), (-1, 0)]
             for direction in directions:
-                if (hero_position[0]+direction[0] > np.shape(self.current_updated_maze)[1]
-                    or hero_position[1]+direction[1] > np.shape(self.current_updated_maze)[0]): pass
+                print(f"Shape: {np.shape(self.current_updated_maze)}")
+                print(f"Heropos: {hero_position[1]+direction[1], hero_position[0]+direction[0]}")
+                if (hero_position[0]+direction[0] >= np.shape(self.current_updated_maze)[1]
+                    or hero_position[1]+direction[1] >= np.shape(self.current_updated_maze)[0] or
+                        hero_position[0] + direction[0] <= 0
+                        or hero_position[1] + direction[1] <= 0): pass
                     # print(np.shape(self.current_updated_maze))
                     # print(hero_position[0]+direction[0], hero_position[1]+direction[1])
                 elif self.current_updated_maze[self.target_point[0]+direction[0]][self.target_point[1]+direction[1]] == 1:
@@ -105,20 +109,29 @@ class Ghost(MovableObject):
     def get_runaway_point(self):
         hero_position = (int(self.controller.hero.y // self.size - 2), int(self.controller.hero.x // self.size))
         self_position = (int(self.y // self.size - 2), int(self.x // self.size))
-        directions = [(i, j) for i in range(-4, 4) for j in range(-4, 4) if (abs(i) == 4 or abs(j) == 4)]
+        #self_position = self.path_position_array[0]
+        # print(f"First: {self.path_position_array[0]}")
+        # print(f"Current: {(int(self.y // self.size - 2), int(self.x // self.size))}")
+        directions = [(i, j) for i in range(-4, 5) for j in range(-4, 5) if (abs(i) == 4 or abs(j) == 4)]
+        print(len(directions))
         targets = []
         for direction in directions:
             nx, ny = self_position[0] + direction[0], self_position[1] + direction[1]
             if (nx >= np.shape(self.current_updated_maze)[0] or ny >= np.shape(self.current_updated_maze)[1] or
-                nx <= 0 or ny <= 0):
-                targets.append(0)
+                nx <= 1 or ny <= 1):
+                targets.append(-1)
             elif self.current_updated_maze[nx][ny] == 1:
                 # print(hero_position)
                 # print(self_position)
-                path = abs(self_position[0]+direction[0] - hero_position[0]) + abs(self_position[1]+direction[1] - hero_position[1])
+                path = np.sqrt(np.power(self_position[0]+direction[0] - hero_position[0], 2) + np.power(self_position[1]+direction[1] - hero_position[1], 2))
                 targets.append(path)
-            else: targets.append(0)
+            else: targets.append(-1)
+        print(f"Self: {self_position}")
+        print(f"Hero: {hero_position}")
+        print(f"Target path: {targets[targets.index(max(targets))]}")
         direction = directions[targets.index(max(targets))]
+        print(f"Direction: {direction}")
+        print(f"Target {self_position[0]+direction[0], self_position[1]+direction[1]}")
         #if targets.index(max(targets)) ==2 or targets.index(max(targets)) == 3: direction *= 2
         return self_position[0]+direction[0], self_position[1]+direction[1]
 
@@ -187,6 +200,7 @@ class Ghost(MovableObject):
             self.reached_target = False
         elif self.reached_target and self.mode == GhostBehaviour.RUNAWAY:
             self.target_point = self.get_runaway_point()
+            print(self.target_point)
             self.get_target_path()
             print(self.path_position_array)
             self.reached_target = False
