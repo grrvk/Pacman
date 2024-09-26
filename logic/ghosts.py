@@ -1,5 +1,8 @@
 import numpy as np
 import random
+
+import pygame
+
 from logic.sprites import MovableObject
 from enum import Enum
 from logic.utils import astar, dfs, bfs, Direction
@@ -9,6 +12,7 @@ import time
 class GhostBehaviour(Enum):
     CHASE = 1
     SCATTER = 2
+    RUNAWAY = 3
 
 
 class Ghost(MovableObject):
@@ -33,6 +37,8 @@ class Ghost(MovableObject):
         self.scattering_time = None
         self.chasing_time = None
         self.redevelop = False
+        self.counter = 0
+        self.image = None
 
     def reset_self(self):
         self.set_position(self.starting_position[0], self.starting_position[1])
@@ -46,7 +52,7 @@ class Ghost(MovableObject):
             self.start_timer = current_time
             self.at_base = False
 
-    def chase_check(self):
+    def mode_check(self):
         current_time = datetime.now().minute * 60 + datetime.now().second
         #print(f"Start {self.start_timer}, current time is {current_time}, waiting {self.switch_mode_time}")
         if self.mode == GhostBehaviour.CHASE and current_time - self.start_timer >= self.chasing_time:
@@ -58,8 +64,17 @@ class Ghost(MovableObject):
             self.reached_target = True
             self.mode = GhostBehaviour.CHASE
             self.start_timer = current_time
-
-
+        elif self.controller.hero.powered and self.counter == 0:
+            print("Running")
+            self.mode = GhostBehaviour.RUNAWAY
+            self.reached_target = True
+            self.counter = 1
+        elif self.controller.hero.powered and self.counter != 0:
+            self.mode = GhostBehaviour.RUNAWAY
+        elif self.mode == GhostBehaviour.RUNAWAY and not self.controller.hero.powered:
+            self.counter = 0
+            self.mode = GhostBehaviour.SCATTER
+            self.reached_target = True
 
     def select_target(self):
         while True:
@@ -83,9 +98,29 @@ class Ghost(MovableObject):
                     # print(hero_position[0]+direction[0], hero_position[1]+direction[1])
                 elif self.current_updated_maze[self.target_point[0]+direction[0]][self.target_point[1]+direction[1]] == 1:
                     targets.append((self.target_point[0]+direction[0], self.target_point[1]+direction[1]))
-            print(targets)
+            #print(targets)
             targets.append(hero_position)
             self.target_point = random.choice(targets)
+
+    def get_runaway_point(self):
+        hero_position = (int(self.controller.hero.y // self.size - 2), int(self.controller.hero.x // self.size))
+        self_position = (int(self.y // self.size - 2), int(self.x // self.size))
+        directions = [(i, j) for i in range(-4, 4) for j in range(-4, 4) if (abs(i) == 4 or abs(j) == 4)]
+        targets = []
+        for direction in directions:
+            nx, ny = self_position[0] + direction[0], self_position[1] + direction[1]
+            if (nx >= np.shape(self.current_updated_maze)[0] or ny >= np.shape(self.current_updated_maze)[1] or
+                nx <= 0 or ny <= 0):
+                targets.append(0)
+            elif self.current_updated_maze[nx][ny] == 1:
+                # print(hero_position)
+                # print(self_position)
+                path = abs(self_position[0]+direction[0] - hero_position[0]) + abs(self_position[1]+direction[1] - hero_position[1])
+                targets.append(path)
+            else: targets.append(0)
+        direction = directions[targets.index(max(targets))]
+        #if targets.index(max(targets)) ==2 or targets.index(max(targets)) == 3: direction *= 2
+        return self_position[0]+direction[0], self_position[1]+direction[1]
 
     def get_chase_point(self):
         pass
@@ -141,7 +176,7 @@ class Ghost(MovableObject):
         if self.at_base:
             self.base_check()
             return
-        self.chase_check()
+        self.mode_check()
         if self.reached_target and self.mode == GhostBehaviour.SCATTER:
             self.select_target()
             self.get_target_path()
@@ -149,6 +184,11 @@ class Ghost(MovableObject):
         elif self.reached_target and self.mode == GhostBehaviour.CHASE:
             self.get_chase_point()
             self.get_target_path()
+            self.reached_target = False
+        elif self.reached_target and self.mode == GhostBehaviour.RUNAWAY:
+            self.target_point = self.get_runaway_point()
+            self.get_target_path()
+            print(self.path_position_array)
             self.reached_target = False
 
         self.current_direction = self.convert_position_to_directions(self.path_position_array[0])
@@ -193,6 +233,12 @@ class Blinky(Ghost):
                                          self.current_updated_maze)
         self.preproces_positions()
 
+    def draw(self):
+        self.image = pygame.image.load('assets/ghost_blue.png') if not self.mode == GhostBehaviour.RUNAWAY \
+            else pygame.image.load('assets/ghost_fright.png')
+        self.image = pygame.transform.scale(self.image, (self.size - 0.02, self.size - 0.02))
+        self.surface.blit(self.image, self.get_shape())
+
 
 class Pinky(Ghost):
     def __init__(self, scene, x, y, size: int, speed, color):
@@ -218,6 +264,12 @@ class Pinky(Ghost):
                                          self.target_point,
                                          self.current_updated_maze)
         self.preproces_positions()
+
+    def draw(self):
+        self.image = pygame.image.load('assets/ghost_pink.png') if not self.mode == GhostBehaviour.RUNAWAY \
+            else pygame.image.load('assets/ghost_fright.png')
+        self.image = pygame.transform.scale(self.image, (self.size - 0.02, self.size - 0.02))
+        self.surface.blit(self.image, self.get_shape())
 
 
 class Inky(Ghost):
@@ -245,6 +297,12 @@ class Inky(Ghost):
                                          self.current_updated_maze)
         self.preproces_positions()
 
+    def draw(self):
+        self.image = pygame.image.load('assets/ghost_red.png') if not self.mode == GhostBehaviour.RUNAWAY \
+            else pygame.image.load('assets/ghost_fright.png')
+        self.image = pygame.transform.scale(self.image, (self.size - 0.02, self.size - 0.02))
+        self.surface.blit(self.image, self.get_shape())
+
 
 class Clyde(Ghost):
     def __init__(self, scene, x, y, size: int, speed, color):
@@ -270,4 +328,10 @@ class Clyde(Ghost):
                                          self.target_point,
                                          self.current_updated_maze)
         self.preproces_positions()
+
+    def draw(self):
+        self.image = pygame.image.load('assets/ghost_orange.png') if not self.mode == GhostBehaviour.RUNAWAY \
+            else pygame.image.load('assets/ghost_fright.png')
+        self.image = pygame.transform.scale(self.image, (self.size - 0.02, self.size - 0.02))
+        self.surface.blit(self.image, self.get_shape())
 

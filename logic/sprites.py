@@ -1,6 +1,6 @@
 from logic.utils import Direction
 import pygame
-import random
+from datetime import datetime
 
 
 class MovableObject:
@@ -14,6 +14,7 @@ class MovableObject:
         self.color = color
         self.y = y
         self.x = x
+
         self.image = None
         self.speed = speed
 
@@ -73,7 +74,11 @@ class MovableObject:
 class Hero(MovableObject):
     def __init__(self, scene, x, y, size: int, speed):
         super().__init__(scene, x * size, y * size, size, speed)
-        self.image = pygame.image.load('assets/pacman.png')
+        self.powered = False
+        self.image = None
+        self.starting_time = None
+        self.power_time = 7
+        self.counter_des = 0
 
     def set_direction(self, direction):
         self.current_direction = direction
@@ -86,8 +91,12 @@ class Hero(MovableObject):
         self.automatic_move(self.current_direction)
         self.previous_direction = self.current_direction
 
+        self.powerup_pickup()
+        if self.powered: self.power_check()
         self.cookie_pickup()
         self.ghost_handling()
+        self.counter_des += 1
+        if self.counter_des == 21: self.counter_des = 0
 
     def automatic_move(self, direction: Direction):
         collision_status, position = self.check_collision_in_direction(direction)
@@ -96,8 +105,21 @@ class Hero(MovableObject):
             self.set_position(position[0], position[1])
 
     def draw(self):
+        self.image = pygame.image.load('assets/pacman_closed.png') if self.counter_des  < 10 \
+            else pygame.image.load('assets/pacman_open.png')
         self.image = pygame.transform.scale(self.image, (self.size - 0.02, self.size - 0.02))
+        if self.current_direction == Direction.UP: rotation = 90
+        elif self.current_direction == Direction.DOWN: rotation = -90
+        elif self.current_direction == Direction.LEFT: rotation = 180
+        else: rotation = 0
+        self.image = pygame.transform.rotate(self.image, rotation)
         self.surface.blit(self.image, self.get_shape())
+
+    def power_check(self):
+        current_time = datetime.now().minute*60+datetime.now().second
+        if self.powered and current_time - self.starting_time >= self.power_time:
+            self.start_timer = None
+            self.powered = False
 
     def cookie_pickup(self):
         collision_rect = pygame.Rect(self.x, self.y, self.size, self.size)
@@ -112,13 +134,28 @@ class Hero(MovableObject):
         if len(cookies) == 0:
             self.controller.regenerate_flag = True
 
+    def powerup_pickup(self):
+        collision_rect = pygame.Rect(self.x, self.y, self.size, self.size)
+        powerups = self.controller.powerups
+        for powerup in powerups:
+            collides = collision_rect.colliderect(powerup.get_shape())
+            if collides and powerup in self.controller.game_objects:
+                self.controller.game_objects.remove(powerup)
+                self.controller.score += powerup.score
+                powerups.remove(powerup)
+                self.powered = True
+                self.starting_time = datetime.now().minute*60+datetime.now().second
+
+
     def ghost_handling(self):
         collision_rect = pygame.Rect(self.x, self.y, self.size, self.size)
         ghosts = self.controller.ghosts
         for ghost in ghosts:
             collides = collision_rect.colliderect(ghost.get_shape())
-            if collides:
+            if collides and self.powered:
                 ghost.reset_self()
+                self.controller.score += ghost.score
+            elif collides and not self.powered:
                 self.set_position(self.starting_position[0], self.starting_position[1])
                 self.controller.hero_lives -= 1
 

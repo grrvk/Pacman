@@ -20,7 +20,7 @@ class GameObject:
 
 
 class Wall(GameObject):
-    def __init__(self, game_screen, x, y, size: int, color=(181, 193, 142)):
+    def __init__(self, game_screen, x, y, size: int, color=(33, 25, 81)):
         super().__init__(game_screen, x * size, y * size, size, color)
         self.shape = pygame.Rect(self.x, self.y, size, size)
 
@@ -52,6 +52,15 @@ class SmallCookie(GameObject):
     def __init__(self, game_screen, x, y, size: int, color=(255, 222, 77)):
         super().__init__(game_screen, x * size + size//2, y * size + size//2, size // 7, color)
         self.score = 10
+
+    def draw(self):
+        pygame.draw.circle(self.surface, self.color, (self.x, self.y), self.size)
+
+
+class Powerup(GameObject):
+    def __init__(self, game_screen, x, y, size: int, color=(255, 222, 77)):
+        super().__init__(game_screen, x * size + size//2, y * size + size//2, size // 3, color)
+        self.score = 50
 
     def draw(self):
         pygame.draw.circle(self.surface, self.color, (self.x, self.y), self.size)

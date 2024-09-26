@@ -18,6 +18,7 @@ class NodeType(Enum):
     GHOST_WHITE_SPACE = 'W'
     HERO_SPAWN = 'H'
     DOOR = 'D'
+    POWERUP = 'P'
 
 
 class Node:
@@ -56,6 +57,7 @@ class Maze:
         self.ease_structure(loops)
         print(self.maze)
         print('----------------------------------')
+        self.set_powerups()
 
     def preprocess(self):
         for i in range(self.size[0]):
@@ -82,6 +84,19 @@ class Maze:
         #     for node in row:
         #         node.visited = True
         #         node.type = NodeType.OUTER_SCOPE.value
+
+    def set_powerups(self):
+        self.get_powerup((1, int(self.size[0] // 2)), (1, int(self.size[1] // 2)))
+        self.get_powerup((1, int(self.size[0] // 2)), (int(self.size[1] // 2), self.size[1] - 1))
+        self.get_powerup((int(self.size[0] // 2), self.size[0] - 1), (1, int(self.size[1] // 2)))
+        self.get_powerup((int(self.size[0] // 2), self.size[0] - 1), (int(self.size[1] // 2), self.size[1] - 1))
+
+    def get_powerup(self, x, y):
+        while True:
+            powerup = (random.randint(x[0], x[1]), random.randint(y[0], y[1]))
+            if self.maze[powerup[0], powerup[1]].type == NodeType.PATH.value:
+                self.maze[powerup[0], powerup[1]].type = NodeType.POWERUP.value
+                break
 
     def postprocess(self):
         center = (self.size[0] // 2, self.size[1] // 2)

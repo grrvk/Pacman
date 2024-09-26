@@ -4,7 +4,7 @@ import numpy as np
 from logic.utils import Direction
 from logic.sprites import Hero
 from logic.ghosts import Inky, Pinky, Blinky, Clyde
-from logic.blocks import Wall, SmallCookie, Heart, Door
+from logic.blocks import Wall, SmallCookie, Heart, Powerup
 from logic.text_controller import TextBlock, ChangingTextBlock
 from maze.maze_generation import MazeController
 
@@ -42,6 +42,7 @@ class GameController:
         self.walls = []
         self.cookies = []
         self.ghosts = []
+        self.powerups = []
         self.hero = None
         self.door = None
         self.run = True
@@ -59,7 +60,7 @@ class GameController:
             self.changing_text_handling()
             pygame.display.flip()
             self.clock.tick(fps)
-            self.game_screen.fill((255, 255, 255))
+            self.game_screen.fill((0,0,0))
             self.handle_event()
         print("Finished")
         pygame.quit()
@@ -103,6 +104,9 @@ class GameController:
         for position in maze.cookie_spaces:
             self.cookies.append(SmallCookie(self.game_screen, position[1], position[0] + self.num_vstack_text,
                                             maze.maze_block_size))
+        for position in maze.powerups:
+            self.powerups.append(Powerup(self.game_screen, position[1], position[0] + self.num_vstack_text,
+                                            maze.maze_block_size))
 
         self.cookies = self.cookies[120:121]
 
@@ -126,9 +130,9 @@ class GameController:
         self.hero = Hero(self, maze.hero_spawn[1], maze.hero_spawn[0] + self.num_vstack_text, maze.maze_block_size,
                          self.hero_speed)
         self.walls.append(Wall(self.game_screen, maze.door_position[1], maze.door_position[0] + self.num_vstack_text,
-                                   maze.maze_block_size, (188, 159, 139)))
+                                   maze.maze_block_size, (64, 46, 122)))
         all_objects = np.concatenate((self.walls, self.ghosts, [self.hero],
-                                      self.cookies), axis=-1)
+                                      self.cookies, self.powerups), axis=-1)
         for block in all_objects:
             self.game_objects.append(block)
 

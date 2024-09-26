@@ -12,6 +12,7 @@ class MazeController:
         self.cookie_spaces = []
         self.reachable_spaces = []
         self.ghost_spawns = []
+        self.powerups = []
         self.hero_spawn = None
         self.door_position = None
 
@@ -25,6 +26,7 @@ class MazeController:
         self.numpy_maze = []
         self.cookie_spaces = []
         self.ghost_spawns = []
+        self.powerups = []
         self.reachable_spaces = []
         self.hero_spawn = None
         self.door_position = None
@@ -47,7 +49,8 @@ class MazeController:
                     converted_row.append(0)
                 else:
                     converted_row.append(1)
-                    if maze_without_outer_bound[i][j].type not in ["G", "H", "W", "D"]: self.cookie_spaces.append((i, j))
+                    if maze_without_outer_bound[i][j].type == "P": self.powerups.append((i, j))
+                    if maze_without_outer_bound[i][j].type not in ["G", "H", "W", "D", "P"]: self.cookie_spaces.append((i, j))
                     if maze_without_outer_bound[i][j].type not in ["G", "W", "D"]: self.reachable_spaces.append((i, j))
             self.numpy_maze.append(converted_row)
         # self.cookie_spaces = np.setdiff1d(self.cookie_spaces, self.ghost_spawns)
