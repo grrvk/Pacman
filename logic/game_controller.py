@@ -66,7 +66,7 @@ class GameController:
             self.clock.tick(fps)
             self.game_screen.fill((0,0,0))
             self.handle_event()
-        print("Finished")
+        #print("Finished")
         pygame.quit()
 
     def game_regeneration(self):
@@ -123,7 +123,7 @@ class GameController:
             self.powerups.append(Powerup(self.game_screen, position[1], position[0] + self.num_vstack_text,
                                             maze.maze_block_size))
 
-        self.cookies = self.cookies[120:121]
+        #self.cookies = self.cookies[120:121]
 
         self.ghosts.append(Inky(self, self.maze_base.ghost_spawns[0][1], self.maze_base.ghost_spawns[0][0] + self.num_vstack_text,
                                 maze.maze_block_size, self.ghost_speed, (0, 31, 63)))

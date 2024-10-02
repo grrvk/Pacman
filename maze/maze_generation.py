@@ -17,7 +17,7 @@ class MazeController:
         self.door_position = None
 
     def level_generation(self, loops):
-        print('Generating new map')
+        #print('Generating new map')
         self.clean()
         self.maze.generate_maze(loops)
         self.convert_maze()

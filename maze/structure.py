@@ -52,11 +52,11 @@ class Maze:
         # print(self.maze)
         # print('----------------------------------')
         self.postprocess()
-        print(self.maze)
-        print('----------------------------------')
+        # print(self.maze)
+        # print('----------------------------------')
         self.ease_structure(loops)
-        print(self.maze)
-        print('----------------------------------')
+        # print(self.maze)
+        # print('----------------------------------')
         self.set_powerups()
 
     def preprocess(self):
